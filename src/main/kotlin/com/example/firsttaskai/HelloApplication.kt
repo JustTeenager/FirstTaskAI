@@ -3,6 +3,8 @@ package com.example.firsttaskai
 import com.example.firsttaskai.models.Drink
 import com.example.firsttaskai.models.Neighbour
 import java.lang.Exception
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 fun main() {
     launchAIDrinkTask()
@@ -116,14 +118,19 @@ private fun getFavorableDrink(neighbours: List<Neighbour>, initialModel: Neighbo
 }
 
 private fun getDrinkInTie(neighbours: List<Neighbour>, initialModel: Neighbour): Drink {
+    val teaAbsoluteDistanceSum =
+        getSqrt(neighbours.filter { it.drink == Drink.TEA }.map { it.getAbsoluteGraphDistance(initialModel) })
+
+    val coffeeAbsoluteDistanceSum =
+        getSqrt(neighbours.filter { it.drink == Drink.COFFEE }.map { it.getAbsoluteGraphDistance(initialModel) })
+
     //Посортируем по убыванию по оставшимся критериям и достаем напиток
-    return neighbours.sortedWith(
-        compareByDescending<Neighbour> { it.getAbsoluteGraphDistance(initialModel) }
-            .thenByDescending { it.stressLevel }
-            .thenByDescending { it.age }
-            .thenByDescending { it.workingTime }
-            .thenByDescending { it.wakingHour }
-            .thenByDescending { it.sleepingHour }
-            .thenByDescending { it.streetNum }
-    ).first().drink
+    return when (teaAbsoluteDistanceSum > coffeeAbsoluteDistanceSum) {
+        true -> Drink.COFFEE
+        false -> Drink.TEA
+    }
+}
+
+private fun getSqrt(list: List<Double>): Double {
+    return list.sumOf { it.pow(2) }
 }

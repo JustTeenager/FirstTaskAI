@@ -19,11 +19,11 @@ fun launchAIDrinkTask() {
     val initialModel = insertInitialModel()
 
     //Обработаем изначальные данные (подправим список соседей)
-    val filteredNeighbours = getNeighboursFilteredByInitialModel(neighboursList, initialModel, neighboursCount)
+    val filteredNeighbours = getAndPrintNeighboursFilteredByInitialModel(neighboursList, initialModel, neighboursCount)
 
     //Выведем и напиток
     println(
-        getFavorableDrink(filteredNeighbours)
+        getFavorableDrink(filteredNeighbours, initialModel)
     )
 }
 
@@ -33,18 +33,18 @@ private fun getNeighboursList(): List<Neighbour> {
 }
 
 private fun insertInitialModel(): Neighbour {
-    println("У испытуемого куплен дом? да/нет/не знаю")
+    println("У испытуемого куплен дом? да/нет")
     val isHouseOwner = when (readln()) {
         "да" -> true
         "нет" -> false
-        else -> null
+        else -> false
     }
 
-    println("У испытуемого есть дети? да/нет/не знаю")
+    println("У испытуемого есть дети? да/нет")
     val hasChildren = when (readln()) {
         "да" -> true
         "нет" -> false
-        else -> null
+        else -> false
     }
 
     println("Какой номер улицы у испытуемого?")
@@ -80,13 +80,13 @@ private fun insertInitialModel(): Neighbour {
     )
 }
 
-private fun getNeighboursFilteredByInitialModel(
+private fun getAndPrintNeighboursFilteredByInitialModel(
     neighboursList: List<Neighbour>,
     initialModel: Neighbour,
     neighboursCount: Int
 ): List<Neighbour> {
     //Вощьмем первые X ближайших к нам соседей
-    var newlist = neighboursList
+    val newlist = neighboursList
         .sortedBy {
             initialModel.getAbsoluteGraphDistance(it)
         }
@@ -97,25 +97,10 @@ private fun getNeighboursFilteredByInitialModel(
             }
         }
 
-    //Если хоть один сосед с таким же состоянием детей -- фильтруем чтобы остался только он
-    // Let проверяет ввели мы null (не важно) или нет, если неважно то не происходит ничего
-    initialModel.hasChildren?.let { hasChildren ->
-        if (newlist.any { hasChildren == it.hasChildren }) {
-            newlist = newlist.filter { it.hasChildren == hasChildren }
-        }
-    }
-
-    //Если хоть один сосед с таким же состоянием дома -- фильтруем чтобы остался только он
-    // Let проверяет ввели мы null (не важно) или нет, если неважно то не происходит ничего
-    initialModel.hasChildren?.let { isHouseOwner ->
-        if (newlist.any { isHouseOwner == it.isHouseOwner }) {
-            newlist = newlist.filter { isHouseOwner == initialModel.isHouseOwner }
-        }
-    }
     return newlist.toList()
 }
 
-private fun getFavorableDrink(neighbours: List<Neighbour>): Drink {
+private fun getFavorableDrink(neighbours: List<Neighbour>, initialModel: Neighbour): Drink {
 
     //Посчитаем любителей кофе и чая
     val teaCount = neighbours.count { it.drink == Drink.TEA }
@@ -125,15 +110,16 @@ private fun getFavorableDrink(neighbours: List<Neighbour>): Drink {
     return when {
         teaCount > coffeeCount -> Drink.TEA
         teaCount < coffeeCount -> Drink.COFFEE
-        teaCount == coffeeCount -> getDrinkInTie(neighbours)
+        teaCount == coffeeCount -> getDrinkInTie(neighbours, initialModel)
         else -> throw Exception()
     }
 }
 
-private fun getDrinkInTie(neighbours: List<Neighbour>): Drink {
+private fun getDrinkInTie(neighbours: List<Neighbour>, initialModel: Neighbour): Drink {
     //Посортируем по убыванию по оставшимся критериям и достаем напиток
     return neighbours.sortedWith(
-        compareByDescending<Neighbour> { it.stressLevel }
+        compareByDescending<Neighbour> { it.getAbsoluteGraphDistance(initialModel) }
+            .thenByDescending { it.stressLevel }
             .thenByDescending { it.age }
             .thenByDescending { it.workingTime }
             .thenByDescending { it.wakingHour }

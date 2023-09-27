@@ -1,17 +1,33 @@
 package com.example.firsttaskai.models
 
+import kotlin.math.pow
+import kotlin.math.sqrt
+
 //Класс соседа
 data class Neighbour(
-    val distance: Int,
+    val streetNum: Int,
     val drink: Drink,
     val wakingHour: Int,
     val sleepingHour: Int,
     val stressLevel: Int,
     val workingTime: Int,
-    val isHouseOwner: Boolean,
-    val hasChildren: Boolean,
+    val isHouseOwner: Boolean?,
+    val hasChildren: Boolean?,
     val age: Int
 ) {
+
+    fun getAbsoluteGraphDistance(otherNeighbour: Neighbour): Double {
+        return sqrt(
+            (streetNum - otherNeighbour.streetNum).toDouble().pow(2) +
+                    (wakingHour - otherNeighbour.wakingHour).toDouble().pow(2) +
+                    (sleepingHour - otherNeighbour.sleepingHour).toDouble().pow(2) +
+                    (stressLevel - otherNeighbour.stressLevel).toDouble().pow(2) +
+                    (workingTime - otherNeighbour.workingTime).toDouble().pow(2) +
+                    (age - otherNeighbour.age).toDouble().pow(2)
+
+        )
+    }
+
     companion object {
         val TEA_WINNERS_LIST = listOf(
             Neighbour(

@@ -1,7 +1,6 @@
 package com.example.firsttaskai
 
 import com.example.firsttaskai.models.Drink
-import com.example.firsttaskai.models.InitialModel
 import com.example.firsttaskai.models.Neighbour
 import java.lang.Exception
 
@@ -13,14 +12,16 @@ fun launchAIDrinkTask() {
     //выберем список соседей
     val neighboursList = getNeighboursList()
 
+    println("Введите количество рассматриваемых соседей: (до 5)")
+    val neighboursCount = readln().toInt()
+
     //Введем изначальные данные и составим из них модель
     val initialModel = insertInitialModel()
 
     //Обработаем изначальные данные (подправим список соседей)
-    val filteredNeighbours = getNeighboursFilteredByInitialModel(neighboursList, initialModel)
+    val filteredNeighbours = getNeighboursFilteredByInitialModel(neighboursList, initialModel, neighboursCount)
 
-    //Выведем список соседей и напиток
-    println(filteredNeighbours)
+    //Выведем и напиток
     println(
         getFavorableDrink(filteredNeighbours)
     )
@@ -31,10 +32,7 @@ private fun getNeighboursList(): List<Neighbour> {
     return Neighbour.COFFEE_WINNERS_LIST
 }
 
-private fun insertInitialModel(): InitialModel {
-    println("Введите количество рассматриваемых соседей: (до 5)")
-    val neighboursCount = readln().toInt()
-
+private fun insertInitialModel(): Neighbour {
     println("У испытуемого куплен дом? да/нет/не знаю")
     val isHouseOwner = when (readln()) {
         "да" -> true
@@ -49,21 +47,55 @@ private fun insertInitialModel(): InitialModel {
         else -> null
     }
 
-    return InitialModel(
-        neighboursCount,
+    println("Какой номер улицы у испытуемого?")
+    val streetNum = readln().toInt()
+
+    println("когда просыпается испытуемый?")
+    val wakingHour = readln().toInt()
+
+    println("когда засыпает испытуемый?")
+    val sleepingHour = readln().toInt()
+
+    println("каков уровень стресса у испытуемого?")
+    val stressLevel = readln().toInt()
+
+    println("Сколько часов работает испытуемый?")
+    val workingTime = readln().toInt()
+
+    println("Каков возраст испытуемого?")
+    val age = readln().toInt()
+
+
+
+    return Neighbour(
+        streetNum,
+        Drink.UNDEFINED,
+        wakingHour,
+        sleepingHour,
+        stressLevel,
+        workingTime,
         isHouseOwner,
-        hasChildren
+        hasChildren,
+        age
     )
 }
 
 private fun getNeighboursFilteredByInitialModel(
     neighboursList: List<Neighbour>,
-    initialModel: InitialModel
+    initialModel: Neighbour,
+    neighboursCount: Int
 ): List<Neighbour> {
     //Вощьмем первые X ближайших к нам соседей
     var newlist = neighboursList
-        .sortedBy { it.distance }
-        .take(initialModel.neighboursCount)
+        .sortedBy {
+            initialModel.getAbsoluteGraphDistance(it)
+        }
+        .take(neighboursCount)
+        .also { list ->
+            list.forEach {
+                println(it.toString() + " Расстояние: ${initialModel.getAbsoluteGraphDistance(it)}")
+            }
+        }
 
     //Если хоть один сосед с таким же состоянием детей -- фильтруем чтобы остался только он
     // Let проверяет ввели мы null (не важно) или нет, если неважно то не происходит ничего
@@ -106,6 +138,6 @@ private fun getDrinkInTie(neighbours: List<Neighbour>): Drink {
             .thenByDescending { it.workingTime }
             .thenByDescending { it.wakingHour }
             .thenByDescending { it.sleepingHour }
-            .thenByDescending { it.distance }
+            .thenByDescending { it.streetNum }
     ).first().drink
 }
